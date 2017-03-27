@@ -52,6 +52,13 @@ int main() {
         return -1; // exit(-1);
     }
     while (myReadFile >> output) {//check state
+        for (int i = 0, len = (int) output.size(); i < len; i++){
+            if (ispunct(output[i]))
+            {
+                output.erase((unsigned long) i--, 1);
+                len = (int) output.size();
+            }
+        }
         myVector.push_back(output);
     }
     myReadFile.close();

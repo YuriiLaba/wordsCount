@@ -22,7 +22,6 @@ int finder(const vector<string>& myVector, int start, int end, std::map<string, 
 
     for (int i = start; i < end; i++) {
         {
-            lock_guard<mutex> lg(mtx);
             ++localMp[myVector[i]];
         }
     }
@@ -66,6 +65,8 @@ inline long long to_us(const D& d)
 }
 
 int main() {
+
+    //clock_t t1, t2;
     string input_data[4], infile, out_by_a, out_by_n;
     int numOfThreads;
     ifstream myFile;
@@ -79,14 +80,17 @@ int main() {
     out_by_a = input_data[1].substr(10, 9);
     out_by_n = input_data[2].substr(10, 9);
     numOfThreads = atoi(input_data[3].substr(8).c_str());
-    //clock_t t1, t2;
 
 
     //vector<string>cont = {",", "/", ".", ";",":", "_", "!", "?"};
     vector<string> myVector;
     vector<pair<string, int>> VectorOfPair;
     map<string, int> m;
-    auto startRead= get_current_time_fenced();
+
+    auto startTotal = get_current_time_fenced();
+
+    auto startRead = get_current_time_fenced();
+
     ifstream myReadFile;
     string data;
     myReadFile.open(infile);
@@ -107,6 +111,9 @@ int main() {
     }
     myReadFile.close();
 
+    auto finishRead = get_current_time_fenced();
+    auto totalRead = finishRead - startRead;
+
     //for (size_t i = 0; i < myVector.size(); i++)
     //{
         //myVector[i]=toLowerCase(myVector[i]);
@@ -115,9 +122,6 @@ int main() {
 
 
 //=========================================================
-    //int  numberOfThreads;
-    //cout << "Please enter an number of threads: ";
-    //cin >> numberOfThreads;
 
 
     thread threads[numOfThreads];
@@ -137,8 +141,8 @@ int main() {
     auto startCount = get_current_time_fenced();
 
     for (int thrIter=0; thrIter<partsOfMyVector.size()-1; ++thrIter) {
-        cout<<partsOfMyVector[thrIter]<<endl;
-        cout<<partsOfMyVector[thrIter+1]<<endl;
+        //cout<<partsOfMyVector[thrIter]<<endl;
+        //cout<<partsOfMyVector[thrIter+1]<<endl;
         threads[thrIter] = thread(finder, cref(myVector), partsOfMyVector[thrIter],
                                   partsOfMyVector[thrIter+1], ref(m));
 
@@ -146,9 +150,9 @@ int main() {
     for (auto& th : threads) th.join();
     auto finishCount = get_current_time_fenced();
 
-    auto countingTime = finishCount - startCount;
+    auto countTime = finishCount - startCount;
+    //cout << "Total time: " << to_us(total_time) << endl;
 
-    ofstream myWriteFileBash;
 
     sort(myVector.begin(), myVector.end());
     for(map<string, int> :: iterator i = m.begin(); i != m.end(); i++){
@@ -172,45 +176,44 @@ int main() {
     sort(VectorOfPair.begin(), VectorOfPair.end(), sortBySecond);
 
     ofstream myWriteFile1;
-    myWriteFile1.open(out_by_n);
-    if (!myWriteFile1) {
+    myWriteFile.open(out_by_n);
+    if (!myWriteFile) {
         cerr << "Could not open file." << endl;
         return 1;
     }
     for ( auto it = VectorOfPair.begin(); it != VectorOfPair.end(); it++ )
     {
-        myWriteFile1 << it->first << " : "<< it->second<<endl;
+        myWriteFile << it->first << " : "<< it->second<<endl;
         // To get hold of the class pointers:
     }
     myWriteFile1.close();
-
-    auto finishRead = get_current_time_fenced();
-    auto readingTime = finishRead - startRead;
-
-    cout << "Counting Time: " << to_us(countingTime) << endl;
-    cout << "Reading Time: " << to_us(readingTime) << endl;
-
-
-    myWriteFileBash.open("result.txt");
-    if (!myWriteFileBash) {
-        cerr << "Could not open file." << endl;
-        return 1;
-    }else{
-        myWriteFileBash<< to_us(countingTime) << endl;
-        //myWriteFileBash<< to_us(readingTime) << endl;
-
-    }
+    auto finishTotal = get_current_time_fenced();
+    auto totalTime = finishTotal - startTotal;
 
     //for(map<string, int> :: iterator i = m.begin(); i != m.end(); i++){
-        //cout << i -> first << ": " << i-> second << endl;
+        //cout <<    i -> first << ": " << i-> second << endl;
 
-    //    }
+    //}
 
     //for(auto i = VectorOfPair.begin(); i != VectorOfPair.end(); i++){
     //cout << i -> first << ": " << i-> second << endl;
 
     //}
     //t2=clock();
+    cout << to_us(totalTime) << endl;
+    cout << to_us(totalRead) << endl;
+    cout << to_us(countTime) << endl;
+    ofstream myWriteFileBash;
+    myWriteFileBash.open("result.txt");
+    if (!myWriteFileBash) {
+        cerr << "Could not open file." << endl;
+        return 1;
+    }else{
+        myWriteFileBash << to_us(totalTime) << endl;
+        myWriteFileBash << to_us(totalRead) << endl;
+        myWriteFileBash << to_us(countTime) << endl;
+    }
 
     return 0;
+
 }
